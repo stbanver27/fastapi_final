@@ -3,36 +3,41 @@ from app.database import get_conexion
 
 #vamos a crear la variable para las rutas:
 router = APIRouter(
-    prefix="/clientes",
-    tags=["Clientes"]
+    prefix="/usuarios",
+    tags=["usuarios"]
 )
 
 #endpoints: GET, GET, POST, PUT, DELETE, PATCH
 @router.get("/")
-def obtener_clientes():
+def obtener_usuarios():
     try:
         cone = get_conexion()
         cursor = cone.cursor()
-        cursor.execute("SELECT rut,nombre,email FROM cliente")
-        clientes = []
-        for rut, nombre, email in cursor:
-            clientes.append({
+        cursor.execute("SELECT rut,tipo_usuario,p_nombre,s_nombre,p_apellido,s_apellido,direccion,correo FROM usuario")
+        usuario = []
+        for rut, tipo_usuario, p_nombre, s_nombre, p_apellido, s_apellido, direccion, correo in cursor:
+            usuario.append({
                 "rut": rut,
-                "nombre": nombre,
-                "email": email
+                "tipo_usuario": tipo_usuario,
+                "p_nombre": p_nombre,
+                "s_nombre": s_nombre,
+                "p_apellido": p_apellido,
+                "s_apellido": s_apellido,
+                "direccion": direccion,
+                "correo": correo
             })
         cursor.close()
         cone.close()
-        return clientes
+        return usuario
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))
 
 @router.get("/{rut_buscar}")
-def obtener_usuario(rut_buscar: int):
+def obtener_usuario(rut_buscar: str):
     try:
         cone = get_conexion()
         cursor = cone.cursor()
-        cursor.execute("SELECT nombre, email FROM cliente WHERE rut = :rut"
+        cursor.execute("SELECT tipo_usuario,p_nombre,s_nombre,p_apellido,s_apellido,direccion,correo FROM usuario WHERE rut = :rut"
                        ,{"rut": rut_buscar})
         usuario = cursor.fetchone()
         cursor.close()
@@ -41,38 +46,43 @@ def obtener_usuario(rut_buscar: int):
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         return {
             "rut": rut_buscar,
-            "nombre": usuario[0],
-            "email": usuario[1]
+            "tipo_usuario": usuario[0],
+            "p_nombre": usuario[1],
+            "s_nombre": usuario[2],
+            "p_apellido": usuario[3],
+            "s_apellido": usuario[4],
+            "direccion": usuario[5],
+            "correo": usuario[6]
         }
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))
 
 @router.post("/")
-def agregar_usuario(rut:int, nombre:str, email:str):
+def agregar_usuario(rut:str, tipo_usuario:str, p_nombre:str, s_nombre:str, p_apellido:str, s_apellido:str, direccion:str, correo:str, contra:str):
     try:
         cone = get_conexion()
         cursor = cone.cursor()
         cursor.execute("""
-            INSERT INTO cliente
-            VALUES(:rut, :nombre, :email)
-        """,{"rut":rut, "nombre":nombre, "email": email})
+            INSERT INTO usuario
+            VALUES(:rut, :tipo_usuario, :p_nombre, :s_nombre, :p_apellido, :s_apellido, :direccion, :correo, :contra)
+        """,{"rut":rut, "tipo_usuario":tipo_usuario, "p_nombre":p_nombre, "s_nombre":s_nombre, "p_apellido":p_apellido, "s_apellido":s_apellido, "direccion":direccion, "correo":correo, "contra":contra})
         cone.commit()
         cursor.close()
         cone.close()
-        return {"mensaje": "cliente agregado con éxito"}
+        return {"mensaje": "usuario agregado con éxito"}
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))
 
 @router.put("/{rut_actualizar}")
-def actualizar_usuario(rut_actualizar:int, nombre:str, email:str):
+def actualizar_usuario(rut_actualizar:str, p_nombre:str, s_nombre:str, p_apellido:str, s_apellido:str, direccion:str, correo:str):
     try:
         cone = get_conexion()
         cursor = cone.cursor()
         cursor.execute("""
-                UPDATE cliente
-                SET nombre = :nombre, email = :email
+                UPDATE usuario
+                SET p_nombre = :p_nombre, s_nombre = :s_nombre, p_apellido = :p_apellido, s_apellido = :s_apellido, direccion = :direccion, correo = :correo
                 WHERE rut = :rut
-        """, {"nombre":nombre, "email":email, "rut":rut_actualizar})
+        """, {"p_nombre":p_nombre, "s_nombre":s_nombre, "p_apellido":p_apellido, "s_apellido":s_apellido, "direccion":direccion, "correo":correo, "rut":rut_actualizar})
         if cursor.rowcount==0:
             cursor.close()
             cone.close()
@@ -85,11 +95,11 @@ def actualizar_usuario(rut_actualizar:int, nombre:str, email:str):
         raise HTTPException(status_code=500, detail=str(ex))
 
 @router.delete("/{rut_eliminar}")
-def eliminar_usuario(rut_eliminar: int):
+def eliminar_usuario(rut_eliminar: str):
     try:
         cone = get_conexion()
         cursor = cone.cursor()
-        cursor.execute("DELETE FROM cliente WHERE rut = :rut"
+        cursor.execute("DELETE FROM usuario WHERE rut = :rut"
                        ,{"rut": rut_eliminar})
         if cursor.rowcount==0:
             cursor.close()
@@ -106,31 +116,66 @@ def eliminar_usuario(rut_eliminar: int):
 from typing import Optional
 
 @router.patch("/{rut_actualizar}")
-def actualizar_parcial(rut_actualizar:int, nombre:Optional[str]=None, email:Optional[str]=None):
+def actualizar_parcial(
+    rut_actualizar: str,
+    tipo_usuario: Optional[str] = None,
+    p_nombre: Optional[str] = None,
+    s_nombre: Optional[str] = None,
+    p_apellido: Optional[str] = None,
+    s_apellido: Optional[str] = None,
+    direccion: Optional[str] = None,
+    correo: Optional[str] = None
+):
     try:
-        if not nombre and not email:
-            raise HTTPException(status_code=400, detail="Debe enviar al menos 1 dato")
+        # Verificar si al menos un campo fue proporcionado
+        if not any([
+            tipo_usuario, p_nombre, s_nombre, p_apellido, 
+            s_apellido, direccion, correo
+        ]):
+            raise HTTPException(status_code=400, detail="Debe enviar al menos 1 dato para actualizar")
+
         cone = get_conexion()
         cursor = cone.cursor()
 
+        # Preparar campos y valores dinámicamente
         campos = []
         valores = {"rut": rut_actualizar}
-        if nombre:
-            campos.append("nombre = :nombre")
-            valores["nombre"] = nombre
-        if email:
-            campos.append("email = :email")
-            valores["email"] = email
 
-        cursor.execute(f"UPDATE cliente SET {', '.join(campos)} WHERE rut = :rut"
-                       ,valores)
-        if cursor.rowcount==0:
+        if tipo_usuario:
+            campos.append("tipo_usuario = :tipo_usuario")
+            valores["tipo_usuario"] = tipo_usuario
+        if p_nombre:
+            campos.append("p_nombre = :p_nombre")
+            valores["p_nombre"] = p_nombre
+        if s_nombre is not None:  # Puede ser vacío o nulo
+            campos.append("s_nombre = :s_nombre")
+            valores["s_nombre"] = s_nombre
+        if p_apellido:
+            campos.append("p_apellido = :p_apellido")
+            valores["p_apellido"] = p_apellido
+        if s_apellido is not None:
+            campos.append("s_apellido = :s_apellido")
+            valores["s_apellido"] = s_apellido
+        if direccion:
+            campos.append("direccion = :direccion")
+            valores["direccion"] = direccion
+        if correo:
+            campos.append("correo = :correo")
+            valores["correo"] = correo
+
+        # Ejecutar consulta
+        cursor.execute(f"UPDATE usuario SET {', '.join(campos)} WHERE rut = :rut", valores)
+
+        if cursor.rowcount == 0:
             cursor.close()
             cone.close()
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
         cone.commit()
         cursor.close()
-        cone.close()        
+        cone.close()
+
         return {"mensaje": "Usuario actualizado con éxito"}
+
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))

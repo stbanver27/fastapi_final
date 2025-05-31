@@ -19,7 +19,7 @@ def get_conexion():
 try:
     conn = get_conexion()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM cliente")
+    cursor.execute("SELECT * FROM usuario")
     for row in cursor:
         print(row)
     cursor.close()
