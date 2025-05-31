@@ -13,7 +13,7 @@ def obtener_clientes():
     try:
         cone = get_conexion()
         cursor = cone.cursor()
-        cursor.execute("SELECT rut,nombre,email FROM alumno")
+        cursor.execute("SELECT rut,nombre,email FROM cliente")
         clientes = []
         for rut, nombre, email in cursor:
             clientes.append({
@@ -32,7 +32,7 @@ def obtener_usuario(rut_buscar: int):
     try:
         cone = get_conexion()
         cursor = cone.cursor()
-        cursor.execute("SELECT nombre, email FROM alumno WHERE rut = :rut"
+        cursor.execute("SELECT nombre, email FROM cliente WHERE rut = :rut"
                        ,{"rut": rut_buscar})
         usuario = cursor.fetchone()
         cursor.close()
@@ -53,13 +53,13 @@ def agregar_usuario(rut:int, nombre:str, email:str):
         cone = get_conexion()
         cursor = cone.cursor()
         cursor.execute("""
-            INSERT INTO alumno
+            INSERT INTO cliente
             VALUES(:rut, :nombre, :email)
         """,{"rut":rut, "nombre":nombre, "email": email})
         cone.commit()
         cursor.close()
         cone.close()
-        return {"mensaje": "Alumno agregado con éxito"}
+        return {"mensaje": "cliente agregado con éxito"}
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))
 
@@ -69,7 +69,7 @@ def actualizar_usuario(rut_actualizar:int, nombre:str, email:str):
         cone = get_conexion()
         cursor = cone.cursor()
         cursor.execute("""
-                UPDATE alumno
+                UPDATE cliente
                 SET nombre = :nombre, email = :email
                 WHERE rut = :rut
         """, {"nombre":nombre, "email":email, "rut":rut_actualizar})
@@ -89,7 +89,7 @@ def eliminar_usuario(rut_eliminar: int):
     try:
         cone = get_conexion()
         cursor = cone.cursor()
-        cursor.execute("DELETE FROM alumno WHERE rut = :rut"
+        cursor.execute("DELETE FROM cliente WHERE rut = :rut"
                        ,{"rut": rut_eliminar})
         if cursor.rowcount==0:
             cursor.close()
@@ -122,7 +122,7 @@ def actualizar_parcial(rut_actualizar:int, nombre:Optional[str]=None, email:Opti
             campos.append("email = :email")
             valores["email"] = email
 
-        cursor.execute(f"UPDATE alumno SET {', '.join(campos)} WHERE rut = :rut"
+        cursor.execute(f"UPDATE cliente SET {', '.join(campos)} WHERE rut = :rut"
                        ,valores)
         if cursor.rowcount==0:
             cursor.close()

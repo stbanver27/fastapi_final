@@ -1,4 +1,4 @@
-DROP TABLE alumno;
+DROP TABLE cliente;
 CREATE TABLE cliente(
     rut NUMBER(8) PRIMARY KEY,
     nombre VARCHAR2(100) NOT NULL,
