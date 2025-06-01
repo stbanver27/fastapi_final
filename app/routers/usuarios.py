@@ -13,9 +13,9 @@ def obtener_usuarios():
     try:
         cone = get_conexion()
         cursor = cone.cursor()
-        cursor.execute("SELECT rut,tipo_usuario,p_nombre,s_nombre,p_apellido,s_apellido,direccion,correo FROM usuario")
+        cursor.execute("SELECT rut,tipo_usuario,p_nombre,s_nombre,p_apellido,s_apellido,direccion,correo, contra FROM usuario")
         usuario = []
-        for rut, tipo_usuario, p_nombre, s_nombre, p_apellido, s_apellido, direccion, correo in cursor:
+        for rut, tipo_usuario, p_nombre, s_nombre, p_apellido, s_apellido, direccion, correo, contra in cursor:
             usuario.append({
                 "rut": rut,
                 "tipo_usuario": tipo_usuario,
@@ -24,7 +24,8 @@ def obtener_usuarios():
                 "p_apellido": p_apellido,
                 "s_apellido": s_apellido,
                 "direccion": direccion,
-                "correo": correo
+                "correo": correo,
+                "contra": contra
             })
         cursor.close()
         cone.close()
