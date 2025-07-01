@@ -8,7 +8,7 @@ CREATE TABLE usuario(
     p_apellido VARCHAR2 (20) NOT NULL,
     s_apellido VARCHAR2 (20),
     direccion VARCHAR2 (100) NOT NULL,
-    correo VARCHAR2(100) NOT NULL,
+    correo VARCHAR2(100) UNIQUE NOT NULL,
     contra VARCHAR2 (30) NOT NULL    
 );
 
