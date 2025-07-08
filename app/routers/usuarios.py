@@ -125,13 +125,14 @@ def actualizar_parcial(
     p_apellido: Optional[str] = None,
     s_apellido: Optional[str] = None,
     direccion: Optional[str] = None,
-    correo: Optional[str] = None
+    correo: Optional[str] = None,
+    contra: Optional[str] = None
 ):
     try:
         # Verificar si al menos un campo fue proporcionado
         if not any([
             tipo_usuario, p_nombre, s_nombre, p_apellido, 
-            s_apellido, direccion, correo
+            s_apellido, direccion, correo, contra
         ]):
             raise HTTPException(status_code=400, detail="Debe enviar al menos 1 dato para actualizar")
 
@@ -163,6 +164,9 @@ def actualizar_parcial(
         if correo:
             campos.append("correo = :correo")
             valores["correo"] = correo
+        if contra:
+            campos.append("contra = :contra")
+            valores["contra"] = contra
 
         # Ejecutar consulta
         cursor.execute(f"UPDATE usuario SET {', '.join(campos)} WHERE rut = :rut", valores)
